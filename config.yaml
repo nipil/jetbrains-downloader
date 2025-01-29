@@ -1,0 +1,39 @@
+---
+products:
+  IIC: # IntelliJ IDEA Community Edition
+    version: 2024.3.2.2
+    os:
+      - windows
+      - linux
+  IIU: # IntelliJ IDEA Ultimate
+    version: 2024.3.2.2
+    os:
+      - linux
+  PCP: # PyCharm Professional Edition
+    version: 2024.3.2
+    os:
+      - linux
+  PS: # PhpStorm
+    version: 2024.3.2.1
+    os: [ ]
+  RR: # RustRover
+    version: 2024.3.4
+    os:
+      - linux
+plugins:   # https://plugins.jetbrains.com/
+  - 7157   # https://plugins.jetbrains.com/plugin/7157-javadoc
+  - 7177   # https://plugins.jetbrains.com/plugin/7177-file-watchers
+  - 7448   # https://plugins.jetbrains.com/plugin/7448-zero-width-characters-locator
+  - 7793   # https://plugins.jetbrains.com/plugin/7793-markdown
+  - 7808   # https://plugins.jetbrains.com/plugin/7808-terraform-and-hcl
+  - 8215   # https://plugins.jetbrains.com/plugin/8215-youtrack-integration
+  - 10249  # https://plugins.jetbrains.com/plugin/10249-powershell
+  - 10581  # https://plugins.jetbrains.com/plugin/10581-go-template
+  - 11070  # https://plugins.jetbrains.com/plugin/11070-unit-file-support-systemd-/versions/stable
+  - 12175  # https://plugins.jetbrains.com/plugin/12175-grazie-lite
+  - 12394  # https://plugins.jetbrains.com/plugin/12394-kubernetes-runtime-configuration
+  - 13122  # https://plugins.jetbrains.com/plugin/13122-shell-script
+  - 13126  # https://plugins.jetbrains.com/plugin/13126-yaml
+  - 13308  # https://plugins.jetbrains.com/plugin/13308-indent-rainbow
+  - 16136  # https://plugins.jetbrains.com/plugin/16136-grazie-pro
+  - 18271  # https://plugins.jetbrains.com/plugin/18271-unicorn-progress-bar
