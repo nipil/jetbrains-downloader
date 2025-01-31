@@ -2,12 +2,19 @@
 
 Allows for easy product and plugin automatic downloads for offline use
 
-## Install on Debian
+## Setup with PIP and VENV
 
     sudo apt-get install -y --no-install-recommends python3-venv
     python3 -m venv .venv
     .venv/bin/pip3 install -r requirements.txt
+
     .venv/bin/python3 get.py
+
+### Setup on Debian 12 with distribution packages
+
+    sudo apt-get install -y --no-install-recommends python3-pydantic python3-urllib3 python3-yaml python3-requests python3-typing-extensions
+
+    python3 get.py
 
 ## Usage
 

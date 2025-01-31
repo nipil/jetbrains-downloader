@@ -13,11 +13,10 @@ from typing import ClassVar, Self, Callable, Any
 from urllib.parse import urlparse
 
 import requests
-from pydantic import BaseModel, Field, AfterValidator
+import yaml
+from pydantic import BaseModel, Field, validator
 from pydantic.networks import HttpUrl
-from pydantic_yaml import parse_yaml_raw_as
 from requests import Request, Session, PreparedRequest
-from typing_extensions import Annotated
 
 
 class AppError(Exception):
@@ -91,7 +90,8 @@ class Config(BaseModel):
     def load(cls, config_file: Path) -> Self:
         try:
             with open(config_file, 'rb') as f:
-                return parse_yaml_raw_as(Config, f.read())
+                config = yaml.safe_load(f)
+                return Config(**config)
         except OSError as e:
             raise AppError(f'Failed to load {config_file}: {e}')
 
@@ -157,8 +157,11 @@ class JetBrainsPluginUpdate(BaseModel):
     version: str
     timestamp_ms: int = Field(alias='cdate')
     file: Path
-    since: Annotated[str | None, AfterValidator(JetBrainsPluginUpdateBuildValidator.is_valid)]
-    until: Annotated[str | None, AfterValidator(JetBrainsPluginUpdateBuildValidator.is_valid)]
+    since: str = None
+    until: str = None
+
+    _since_validator = validator('since', allow_reuse=True)(JetBrainsPluginUpdateBuildValidator.is_valid)
+    _until_validator = validator('until', allow_reuse=True)(JetBrainsPluginUpdateBuildValidator.is_valid)
 
 
 class JetBrainsApi:
