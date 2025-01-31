@@ -12,7 +12,6 @@ from pathlib import Path
 from typing import ClassVar, Self, Callable, Any
 from urllib.parse import urlparse
 
-import requests
 import yaml
 from pydantic import BaseModel, Field, validator
 from pydantic.networks import HttpUrl
@@ -21,29 +20,6 @@ from requests import Request, Session, PreparedRequest
 
 class AppError(Exception):
     pass
-
-
-def download_file(url: str, directory: Path, *, params: dict = None) -> Path:
-    if params is None:
-        params = {}
-    logging.debug(f'Downloading {url} to {directory}')
-    directory.mkdir(parents=True, exist_ok=True)
-    try:
-        with (requests.get(url, stream=True, params=params) as response):
-            url = response.request.url
-            file = os.path.basename(urlparse(url).path)
-            target = directory / file
-            if target.exists():
-                logging.debug(f'File {file} already exists: skipping download')
-                return target
-            logging.info(f'Downloading {file}...')
-            with open(target, 'wb') as f:
-                # noinspection PyTypeChecker
-                shutil.copyfileobj(response.raw, f)  # type hint issue for f
-    except Exception as e:
-        target.unlink(missing_ok=True)
-        raise AppError(f'Failed to download {url}, eventual file {file} was purged : {e}')
-    return target
 
 
 def get_hash_file_digest(hash_file: Path) -> str:
@@ -164,19 +140,73 @@ class JetBrainsPluginUpdate(BaseModel):
     _until_validator = validator('until', allow_reuse=True)(JetBrainsPluginUpdateBuildValidator.is_valid)
 
 
+class Urls(BaseModel):
+    request_hostname: set[str] = Field(default_factory=set)
+    response_hostname: set[str] = Field(default_factory=set)
+    request_url: set[str] = Field(default_factory=set)
+    response_url: set[str] = Field(default_factory=set)
+
+
 class JetBrainsApi:
     DATA_URL = 'https://data.services.jetbrains.com'
     PLUGIN_URL = 'https://plugins.jetbrains.com'
+    URL_FILE = 'url.json'
 
     def __init__(self, *, cache=None):
         self.session = Session()
         self.cache = cache
+        self.urls = Urls()
+
+    def track_request_hostname(self, url):
+        hostname = urlparse(url).hostname
+        if hostname not in self.urls.request_hostname:
+            logging.debug(f'Tracking request hostname : {hostname}')
+            self.urls.request_hostname.add(hostname)
+
+    def track_response_hostname(self, url):
+        hostname = urlparse(url).hostname
+        # only add if not already known in request
+        if hostname not in self.urls.request_hostname:
+            logging.debug(f'Tracking response hostname : {hostname}')
+            self.urls.response_hostname.add(hostname)
+
+    def track_request_url(self, url) -> None:
+        self.track_request_hostname(url)
+        if url not in self.urls.request_url:
+            logging.debug(f'Tracking request URL : {url}')
+            self.urls.request_url.add(url)
+
+    def track_response_url(self, url) -> None:
+        self.track_response_hostname(url)
+        # only add if not already known in request
+        if url not in self.urls.request_url:
+            logging.debug(f'Tracking response URL : {url}')
+            self.urls.response_url.add(url)
+
+    def write_tracked_url(self) -> None:
+        logging.info(f'Writing tracked url to {self.URL_FILE}')
+        # noinspection PyTypeChecker
+        self.urls.request_hostname = sorted(self.urls.request_hostname)
+        # noinspection PyTypeChecker
+        self.urls.response_hostname = sorted(self.urls.response_hostname)
+        # noinspection PyTypeChecker
+        self.urls.request_url = sorted(self.urls.request_url)
+        # noinspection PyTypeChecker
+        self.urls.response_url = sorted(self.urls.response_url)
+        try:
+            with open(self.URL_FILE, 'wt') as f:
+                f.write(self.urls.json(indent=4))
+        except OSError as e:
+            raise AppError(f'Failed to write tracked url {self.URL_FILE}: {e}')
 
     def do_cached_query(self, request: PreparedRequest) -> dict:
+        self.track_request_url(request.url)
         try:
             data = self.cache.read(request.url)
         except KeyError:
-            data = self.session.send(request).json()
+            response = self.session.send(request)
+            self.track_response_url(response.request.url)
+            data = response.json()
             self.cache.put(request.url, data)
         return data
 
@@ -215,9 +245,35 @@ class JetBrainsApi:
             page += 1
         return updates
 
+    def download_file(self, url: str, directory: Path, *, params: dict = None) -> Path:
+        if params is None:
+            params = {}
+        logging.debug(f'Downloading {url} to {directory}')
+        directory.mkdir(parents=True, exist_ok=True)
+        target = None
+        try:
+            request = Request('GET', url, params=params).prepare()
+            self.track_request_url(request.url)
+            response = self.session.send(request, stream=True)
+            self.track_response_url(response.request.url)
+            file = os.path.basename(urlparse(response.request.url).path)
+            target = directory / file
+            if target.exists():
+                logging.debug(f'File {file} already exists: skipping download')
+                return target
+            logging.info(f'Downloading {file}...')
+            with open(target, 'wb') as f:
+                # noinspection PyTypeChecker
+                shutil.copyfileobj(response.raw, f)  # type hint issue for f
+        except Exception as e:
+            if target is not None:
+                target.unlink(missing_ok=True)
+            raise AppError(f'Failed to download {url}, eventual file {target} was purged : {e}')
+        return target
+
     def download_plugin(self, plugin_update_id: int, directory: Path) -> Path:
         params = {'rel': True, 'updateId': plugin_update_id}
-        return download_file(f'{self.PLUGIN_URL}/plugin/download', directory, params=params)
+        return self.download_file(f'{self.PLUGIN_URL}/plugin/download', directory, params=params)
 
 
 class Cache:
@@ -335,11 +391,11 @@ class App:
 
     def download_product_info(self, info: JetBrainsProductReleaseDownloadInfo) -> list[Path]:
         products_dir = self.get_products_destination()
-        product_file = download_file(str(info.link), products_dir)
+        product_file = self.api.download_file(str(info.link), products_dir)
         if product_file.stat().st_size != info.size:
             product_file.unlink()
             raise AppError(f'Downloaded {product_file} has the wrong size, and was removed')
-        hash_file = download_file(str(info.checksum_link), products_dir)
+        hash_file = self.api.download_file(str(info.checksum_link), products_dir)
         if not is_digest_valid(product_file, hash_file):
             product_file.unlink()
             raise AppError(f'Downloaded {product_file} has the wrong hash, and was removed')
@@ -421,8 +477,8 @@ class App:
         logging.info(f'Generating metadata for product {product_id}')
         metadata_file = f'{product_id.lower()}.json'
         metadata_path = self.get_metadata_destination() / metadata_file
-        product_files = [file.name for file in product_files]
-        plugin_files = [file.name for file in plugin_files]
+        product_files = sorted((file.name for file in product_files), key=lambda x: x.casefold())
+        plugin_files = sorted((file.name for file in plugin_files), key=lambda x: x.casefold())
         data = {"products": product_files, "plugins": plugin_files}
         try:
             with open(metadata_path, 'wt') as f:
@@ -506,6 +562,7 @@ class App:
         self.load_configured_plugins_information()
         known_files = self.process_configured_products()
         self.manage_unknown_files(known_files)
+        self.api.write_tracked_url()
         logging.info('JetBrains product and plugins downloader finished.')
 
 

@@ -33,8 +33,10 @@ By default, `DEST` is a newly-created `artefacts` folder in the current director
 Notes :
 
 - `--clean-unknown` is intended to prune old items when your versions evolve, in order to lower disk usage.
-- `--cache-api` is only intended to speed up development, and saves the API replies to the `cache` folder. \
-  Be careful when you use it to not accidentally use stale data. Delete `cache` folder when not working on code.
+- `--cache-api` is only intended to speed up development, and saves the API replies to the `cache` folder.
+    - Be careful when you use it to not accidentally use stale data
+    - Delete `cache` folder when not working on code
+    - Might make `url.json` incomplete as redirections are not seen when using cache !
 
 ## Sample configuration
 
@@ -127,6 +129,45 @@ Product installers are downloaded along with their hash verification file, and v
         ├── ideaIU-2024.3.2.2.tar.gz.sha256
         ├── pycharm-professional-2024.3.2.tar.gz
         └── pycharm-professional-2024.3.2.tar.gz.sha256
+
+## Sample tracked URL file
+
+An `url.json` file is generated with all the URL seen during processing :
+
+- the requested URL are logged
+- the final URL are logged too (after) redirects
+- same for the hostnames
+- **WARNING**: if _multiple_ redirects are done, the intermediary urls will _not_ be logged
+
+This allows precise and easy URL generation, for inclusion in secure web gateways whitelists.
+
+Sample output :
+
+    {
+        "request_hostname": [
+            "data.services.jetbrains.com",
+            "download.jetbrains.com",
+            "plugins.jetbrains.com"
+        ],
+        "response_hostname": [
+            "download-cdn.jetbrains.com",
+            "downloads.marketplace.jetbrains.com"
+        ],
+        "request_url": [
+            "https://data.services.jetbrains.com/products?code=IIC&release.type=release",
+            ...
+            "https://download.jetbrains.com/idea/ideaIC-2024.3.2.2.exe",
+            ...
+            "https://plugins.jetbrains.com/api/plugins/10249",
+            ...
+        ],
+        "response_url": [
+            "https://download-cdn.jetbrains.com/idea/ideaIC-2024.3.2.2.exe",
+            ...
+            "https://downloads.marketplace.jetbrains.com/files/10249/621620/PowerShell-2.8.0.zip?updateId=621620&pluginId=10249&family=INTELLIJ",
+            ...
+        ]
+    }
 
 ## Sample metadata file
 

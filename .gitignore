@@ -178,3 +178,4 @@ cython_debug/
 artefacts
 cache
 unknown.txt
+url.json
