@@ -16,12 +16,28 @@ Allows for easy product and plugin automatic downloads for offline use
 
     python3 get.py
 
+## Docker
+
+Docker files are provided to validate setup instructions and test in-situ.
+
+- `Dockerfile.venv` to setup using `venv` and `pip` :
+
+      docker build -f Dockerfile.venv -t jetbrains-downloader-venv .
+
+- `Dockerfile.native` one using native distribution packages only :
+
+      docker build -f Dockerfile.native -t jetbrains-downloader-native .
+
+- Then run the application the same way, binding volumes to the host
+
+      docker run --rm -v .:/app -t jetbrains-downloader-XXXXX --config /app/config.yaml --dest /app
+
 ## Usage
 
 By default, `DEST` is a newly-created `artefacts` folder in the current directory.
 
     usage: get.py [-h] [-v] [-c CONFIG] [-d DEST] [--cache-api] [--clean-unknown]
-    
+
     options:
       -h, --help            show this help message and exit
       -v, --verbose
@@ -96,43 +112,43 @@ Example configuration :
 
 Product installers are downloaded along with their hash verification file, and verified upon completion.
 
-    $ tree  artefacts/  --filesfirst
-    artefacts/
-    ├── iic.json
-    ├── iiu.json
-    ├── pcp.json
-    ├── ps.json
-    ├── rr.json
-    ├── plugins
-    │   ├── Indent_Rainbow-2.2.0-signed.zip
-    │   ├── PowerShell-2.8.0.zip
-    │   ├── UnicornProgressBar-1.1.4.zip
-    │   ├── ZeroLengthRadar-0.95.zip
-    │   ├── fileWatcher-243.23654.19.zip
-    │   ├── go-template-243.21565.122.zip
-    │   ├── grazie-pro-0.3.359.zip
-    │   ├── intellij-javadocs-4.1.3.zip
-    │   ├── intellij-k8s-runtime-config-1.4.1.zip
-    │   ├── sh-243.22562.53.zip
-    │   ├── systemdUnitFilePlugin-242.250115.172.zip
-    │   ├── terraform-243.23654.44.zip
-    │   ├── yaml-243.23654.189.zip
-    │   └── ytplugin-2024.2.123.zip
-    └── products
-        ├── RustRover-2024.3.4.tar.gz
-        ├── RustRover-2024.3.4.tar.gz.sha256
-        ├── ideaIC-2024.3.2.2.exe
-        ├── ideaIC-2024.3.2.2.exe.sha256
-        ├── ideaIC-2024.3.2.2.tar.gz
-        ├── ideaIC-2024.3.2.2.tar.gz.sha256
-        ├── ideaIU-2024.3.2.2.tar.gz
-        ├── ideaIU-2024.3.2.2.tar.gz.sha256
-        ├── pycharm-professional-2024.3.2.tar.gz
-        └── pycharm-professional-2024.3.2.tar.gz.sha256
+    $ tree --filesfirst artefacts
+
+    artefacts
+    |-- index.json
+    |-- url.json
+    |-- plugins
+    |   |-- Indent_Rainbow-2.2.0-signed.zip
+    |   |-- PowerShell-2.8.0.zip
+    |   |-- UnicornProgressBar-1.1.4.zip
+    |   |-- ZeroLengthRadar-0.95.zip
+    |   |-- fileWatcher-243.23654.19.zip
+    |   |-- go-template-243.21565.122.zip
+    |   |-- grazie-pro-0.3.359.zip
+    |   |-- intellij-javadocs-4.1.3.zip
+    |   |-- intellij-k8s-runtime-config-1.4.1.zip
+    |   |-- sh-243.22562.53.zip
+    |   |-- systemdUnitFilePlugin-242.250115.172.zip
+    |   |-- terraform-243.23654.44.zip
+    |   |-- yaml-243.23654.189.zip
+    |   `-- ytplugin-2024.2.123.zip
+    `-- products
+        |-- linux
+        |   |-- RustRover-2024.3.4.tar.gz
+        |   |-- RustRover-2024.3.4.tar.gz.sha256
+        |   |-- ideaIC-2024.3.2.2.tar.gz
+        |   |-- ideaIC-2024.3.2.2.tar.gz.sha256
+        |   |-- ideaIU-2024.3.2.2.tar.gz
+        |   |-- ideaIU-2024.3.2.2.tar.gz.sha256
+        |   |-- pycharm-professional-2024.3.2.tar.gz
+        |   `-- pycharm-professional-2024.3.2.tar.gz.sha256
+        `-- windows
+            |-- ideaIC-2024.3.2.2.exe
+            `-- ideaIC-2024.3.2.2.exe.sha256
 
 ## Sample tracked URL file
 
-An `url.json` file is generated with all the URL seen during processing :
+An `url.json` metadata file is generated with all the URL seen during processing :
 
 - the requested URL are logged
 - the final URL are logged too (after) redirects
@@ -171,36 +187,36 @@ Sample output :
 
 ## Sample metadata file
 
-Metadata files are produced for each product, in order  :
+An `index.json` metadata file is generated for downloaded products, in order to :
 
 - to be able to script any offline/air-gapped installation more easily
 - to be able to link present files on disk versus desired products/plugins
 
-One file per product is produced, with a content similar to the following :
+Content looks like the following :
 
     {
-        "products": [
-            "ideaIC-2024.3.2.2.exe",
-            "ideaIC-2024.3.2.2.exe.sha256",
-            "ideaIC-2024.3.2.2.tar.gz",
-            "ideaIC-2024.3.2.2.tar.gz.sha256"
-        ],
-        "plugins": [
-            "intellij-javadocs-4.1.3.zip",
-            "fileWatcher-243.23654.19.zip",
-            "ZeroLengthRadar-0.95.zip",
-            "terraform-243.23654.44.zip",
-            "ytplugin-2024.2.123.zip",
-            "PowerShell-2.8.0.zip",
-            "go-template-243.21565.122.zip",
-            "systemdUnitFilePlugin-242.250115.172.zip",
-            "intellij-k8s-runtime-config-1.4.1.zip",
-            "sh-243.22562.53.zip",
-            "yaml-243.23654.189.zip",
-            "Indent_Rainbow-2.2.0-signed.zip",
-            "grazie-pro-0.3.359.zip",
-            "UnicornProgressBar-1.1.4.zip"
-        ]
+        "products": {
+            "IIC": {
+                "archives": {
+                    "windows": {
+                        "archive": "artefacts/products/windows/ideaIC-2024.3.2.2.exe",
+                        "hash": "artefacts/products/windows/ideaIC-2024.3.2.2.exe.sha256"
+                    },
+                    "linux": {
+                        "archive": "artefacts/products/linux/ideaIC-2024.3.2.2.tar.gz",
+                        "hash": "artefacts/products/linux/ideaIC-2024.3.2.2.tar.gz.sha256"
+                    }
+                },
+                "plugins": {
+                    "7157": "artefacts/plugins/intellij-javadocs-4.1.3.zip",
+                    ...
+                }
+            },
+            "IIU": {
+                ...
+            },
+            ...
+        }
     }
 
 ## Sample unknown file
@@ -214,125 +230,123 @@ The `--clean-unknown` option can be used to clean these unknown files automatica
 ## Sample logging output
 
     INFO Starting JetBrains product and plugins downloader...
-    INFO Found 22 releases of plugin "JavaDoc" (id=7157)
-    INFO Found 481 releases of plugin "File Watchers" (id=7177)
-    INFO Found 5 releases of plugin "Zero Width Characters locator" (id=7448)
-    INFO Found 257 releases of plugin "Markdown" (id=7793)
-    INFO Found 310 releases of plugin "Terraform and HCL" (id=7808)
-    INFO Found 95 releases of plugin "YouTrack Integration" (id=8215)
-    INFO Found 30 releases of plugin "PowerShell" (id=10249)
-    INFO Found 403 releases of plugin "Go Template" (id=10581)
-    INFO Found 82 releases of plugin "Unit File Support (systemd)" (id=11070)
-    INFO Found 298 releases of plugin "Grazie Lite" (id=12175)
-    INFO Found 21 releases of plugin "Kubernetes Runtime Configuration" (id=12394)
-    INFO Found 204 releases of plugin "Shell Script" (id=13122)
-    INFO Found 206 releases of plugin "YAML" (id=13126)
-    INFO Found 22 releases of plugin "Indent Rainbow" (id=13308)
-    INFO Found 238 releases of plugin "Grazie Pro" (id=16136)
-    INFO Found 2 releases of plugin "Unicorn Progress Bar" (id=18271)
+    INFO Found 16 plugins in configuration
+    INFO Found 22 releases for plugin id 7157
+    INFO Found 481 releases for plugin id 7177
+    INFO Found 5 releases for plugin id 7448
+    INFO Found 257 releases for plugin id 7793
+    INFO Found 310 releases for plugin id 7808
+    INFO Found 95 releases for plugin id 8215
+    INFO Found 30 releases for plugin id 10249
+    INFO Found 403 releases for plugin id 10581
+    INFO Found 82 releases for plugin id 11070
+    INFO Found 298 releases for plugin id 12175
+    INFO Found 21 releases for plugin id 12394
+    INFO Found 204 releases for plugin id 13122
+    INFO Found 206 releases for plugin id 13126
+    INFO Found 22 releases for plugin id 13308
+    INFO Found 238 releases for plugin id 16136
+    INFO Found 2 releases for plugin id 18271
     INFO Processing IIC
     INFO Product IIC is "IntelliJ IDEA Community Edition", and version 2024.3.2.2 is build 243.23654.189
     INFO Valid ideaIC-2024.3.2.2.exe found on disk
     INFO Valid ideaIC-2024.3.2.2.tar.gz found on disk
-    INFO Found matching plugin JavaDoc version 4.1.3
-    INFO Found matching plugin File Watchers version 243.23654.19
-    INFO Found matching plugin Zero Width Characters locator version 0.95
+    INFO Plugin JavaDoc version 4.1.3 matches 243.23654.189
+    INFO Plugin File Watchers version 243.23654.19 matches 243.23654.189
+    INFO Plugin Zero Width Characters locator version 0.95 matches 243.23654.189
     WARNING No matching plugin Markdown version for product build 243.23654.189
-    INFO Found matching plugin Terraform and HCL version 243.23654.44
-    INFO Found matching plugin YouTrack Integration version 2024.2.123
-    INFO Found matching plugin PowerShell version 2.8.0
-    INFO Found matching plugin Go Template version 243.21565.122
-    INFO Found matching plugin Unit File Support (systemd) version 242.250115.172
+    INFO Plugin Terraform and HCL version 243.23654.44 matches 243.23654.189
+    INFO Plugin YouTrack Integration version 2024.2.123 matches 243.23654.189
+    INFO Plugin PowerShell version 2.8.0 matches 243.23654.189
+    INFO Plugin Go Template version 243.21565.122 matches 243.23654.189
+    INFO Plugin Unit File Support (systemd) version 242.250115.172 matches 243.23654.189
     WARNING No matching plugin Grazie Lite version for product build 243.23654.189
-    INFO Found matching plugin Kubernetes Runtime Configuration version 1.4.1
-    INFO Found matching plugin Shell Script version 243.22562.53
-    INFO Found matching plugin YAML version 243.23654.189
-    INFO Found matching plugin Indent Rainbow version 2.2.0
-    INFO Found matching plugin Grazie Pro version 0.3.359
-    INFO Found matching plugin Unicorn Progress Bar version 1.1.4
-    INFO Generating metadata for product IIC
+    INFO Plugin Kubernetes Runtime Configuration version 1.4.1 matches 243.23654.189
+    INFO Plugin Shell Script version 243.22562.53 matches 243.23654.189
+    INFO Plugin YAML version 243.23654.189 matches 243.23654.189
+    INFO Plugin Indent Rainbow version 2.2.0 matches 243.23654.189
+    INFO Plugin Grazie Pro version 0.3.359 matches 243.23654.189
+    INFO Plugin Unicorn Progress Bar version 1.1.4 matches 243.23654.189
     INFO Processing IIU
     INFO Product IIU is "IntelliJ IDEA Ultimate", and version 2024.3.2.2 is build 243.23654.189
     INFO Valid ideaIU-2024.3.2.2.tar.gz found on disk
-    INFO Found matching plugin JavaDoc version 4.1.3
-    INFO Found matching plugin File Watchers version 243.23654.19
-    INFO Found matching plugin Zero Width Characters locator version 0.95
+    INFO Plugin JavaDoc version 4.1.3 matches 243.23654.189
+    INFO Plugin File Watchers version 243.23654.19 matches 243.23654.189
+    INFO Plugin Zero Width Characters locator version 0.95 matches 243.23654.189
     WARNING No matching plugin Markdown version for product build 243.23654.189
-    INFO Found matching plugin Terraform and HCL version 243.23654.44
-    INFO Found matching plugin YouTrack Integration version 2024.2.123
-    INFO Found matching plugin PowerShell version 2.8.0
-    INFO Found matching plugin Go Template version 243.21565.122
-    INFO Found matching plugin Unit File Support (systemd) version 242.250115.172
+    INFO Plugin Terraform and HCL version 243.23654.44 matches 243.23654.189
+    INFO Plugin YouTrack Integration version 2024.2.123 matches 243.23654.189
+    INFO Plugin PowerShell version 2.8.0 matches 243.23654.189
+    INFO Plugin Go Template version 243.21565.122 matches 243.23654.189
+    INFO Plugin Unit File Support (systemd) version 242.250115.172 matches 243.23654.189
     WARNING No matching plugin Grazie Lite version for product build 243.23654.189
-    INFO Found matching plugin Kubernetes Runtime Configuration version 1.4.1
-    INFO Found matching plugin Shell Script version 243.22562.53
-    INFO Found matching plugin YAML version 243.23654.189
-    INFO Found matching plugin Indent Rainbow version 2.2.0
-    INFO Found matching plugin Grazie Pro version 0.3.359
-    INFO Found matching plugin Unicorn Progress Bar version 1.1.4
-    INFO Generating metadata for product IIU
+    INFO Plugin Kubernetes Runtime Configuration version 1.4.1 matches 243.23654.189
+    INFO Plugin Shell Script version 243.22562.53 matches 243.23654.189
+    INFO Plugin YAML version 243.23654.189 matches 243.23654.189
+    INFO Plugin Indent Rainbow version 2.2.0 matches 243.23654.189
+    INFO Plugin Grazie Pro version 0.3.359 matches 243.23654.189
+    INFO Plugin Unicorn Progress Bar version 1.1.4 matches 243.23654.189
     INFO Processing PCP
     INFO Product PCP is "PyCharm Professional Edition", and version 2024.3.2 is build 243.23654.177
     INFO Valid pycharm-professional-2024.3.2.tar.gz found on disk
-    INFO Found matching plugin JavaDoc version 4.1.3
-    INFO Found matching plugin File Watchers version 243.23654.19
-    INFO Found matching plugin Zero Width Characters locator version 0.95
+    INFO Plugin JavaDoc version 4.1.3 matches 243.23654.177
+    INFO Plugin File Watchers version 243.23654.19 matches 243.23654.177
+    INFO Plugin Zero Width Characters locator version 0.95 matches 243.23654.177
     WARNING No matching plugin Markdown version for product build 243.23654.177
-    INFO Found matching plugin Terraform and HCL version 243.23654.44
-    INFO Found matching plugin YouTrack Integration version 2024.2.123
-    INFO Found matching plugin PowerShell version 2.8.0
-    INFO Found matching plugin Go Template version 243.21565.122
-    INFO Found matching plugin Unit File Support (systemd) version 242.250115.172
+    INFO Plugin Terraform and HCL version 243.23654.44 matches 243.23654.177
+    INFO Plugin YouTrack Integration version 2024.2.123 matches 243.23654.177
+    INFO Plugin PowerShell version 2.8.0 matches 243.23654.177
+    INFO Plugin Go Template version 243.21565.122 matches 243.23654.177
+    INFO Plugin Unit File Support (systemd) version 242.250115.172 matches 243.23654.177
     WARNING No matching plugin Grazie Lite version for product build 243.23654.177
-    INFO Found matching plugin Kubernetes Runtime Configuration version 1.4.1
-    INFO Found matching plugin Shell Script version 243.22562.53
-    INFO Found matching plugin YAML version 243.23654.189
-    INFO Found matching plugin Indent Rainbow version 2.2.0
-    INFO Found matching plugin Grazie Pro version 0.3.359
-    INFO Found matching plugin Unicorn Progress Bar version 1.1.4
-    INFO Generating metadata for product PCP
+    INFO Plugin Kubernetes Runtime Configuration version 1.4.1 matches 243.23654.177
+    INFO Plugin Shell Script version 243.22562.53 matches 243.23654.177
+    INFO Plugin YAML version 243.23654.189 matches 243.23654.177
+    INFO Plugin Indent Rainbow version 2.2.0 matches 243.23654.177
+    INFO Plugin Grazie Pro version 0.3.359 matches 243.23654.177
+    INFO Plugin Unicorn Progress Bar version 1.1.4 matches 243.23654.177
     INFO Processing PS
     INFO Product PS is "PhpStorm", and version 2024.3.2.1 is build 243.23654.168
-    INFO Found matching plugin JavaDoc version 4.1.3
-    INFO Found matching plugin File Watchers version 243.23654.19
-    INFO Found matching plugin Zero Width Characters locator version 0.95
+    INFO Plugin JavaDoc version 4.1.3 matches 243.23654.168
+    INFO Plugin File Watchers version 243.23654.19 matches 243.23654.168
+    INFO Plugin Zero Width Characters locator version 0.95 matches 243.23654.168
     WARNING No matching plugin Markdown version for product build 243.23654.168
-    INFO Found matching plugin Terraform and HCL version 243.23654.44
-    INFO Found matching plugin YouTrack Integration version 2024.2.123
-    INFO Found matching plugin PowerShell version 2.8.0
-    INFO Found matching plugin Go Template version 243.21565.122
-    INFO Found matching plugin Unit File Support (systemd) version 242.250115.172
+    INFO Plugin Terraform and HCL version 243.23654.44 matches 243.23654.168
+    INFO Plugin YouTrack Integration version 2024.2.123 matches 243.23654.168
+    INFO Plugin PowerShell version 2.8.0 matches 243.23654.168
+    INFO Plugin Go Template version 243.21565.122 matches 243.23654.168
+    INFO Plugin Unit File Support (systemd) version 242.250115.172 matches 243.23654.168
     WARNING No matching plugin Grazie Lite version for product build 243.23654.168
-    INFO Found matching plugin Kubernetes Runtime Configuration version 1.4.1
-    INFO Found matching plugin Shell Script version 243.22562.53
-    INFO Found matching plugin YAML version 243.23654.189
-    INFO Found matching plugin Indent Rainbow version 2.2.0
-    INFO Found matching plugin Grazie Pro version 0.3.359
-    INFO Found matching plugin Unicorn Progress Bar version 1.1.4
-    INFO Generating metadata for product PS
+    INFO Plugin Kubernetes Runtime Configuration version 1.4.1 matches 243.23654.168
+    INFO Plugin Shell Script version 243.22562.53 matches 243.23654.168
+    INFO Plugin YAML version 243.23654.189 matches 243.23654.168
+    INFO Plugin Indent Rainbow version 2.2.0 matches 243.23654.168
+    INFO Plugin Grazie Pro version 0.3.359 matches 243.23654.168
+    INFO Plugin Unicorn Progress Bar version 1.1.4 matches 243.23654.168
     INFO Processing RR
     INFO Product RR is "RustRover", and version 2024.3.4 is build 243.23654.180
     INFO Valid RustRover-2024.3.4.tar.gz found on disk
-    INFO Found matching plugin JavaDoc version 4.1.3
-    INFO Found matching plugin File Watchers version 243.23654.19
-    INFO Found matching plugin Zero Width Characters locator version 0.95
+    INFO Plugin JavaDoc version 4.1.3 matches 243.23654.180
+    INFO Plugin File Watchers version 243.23654.19 matches 243.23654.180
+    INFO Plugin Zero Width Characters locator version 0.95 matches 243.23654.180
     WARNING No matching plugin Markdown version for product build 243.23654.180
-    INFO Found matching plugin Terraform and HCL version 243.23654.44
-    INFO Found matching plugin YouTrack Integration version 2024.2.123
-    INFO Found matching plugin PowerShell version 2.8.0
-    INFO Found matching plugin Go Template version 243.21565.122
-    INFO Found matching plugin Unit File Support (systemd) version 242.250115.172
+    INFO Plugin Terraform and HCL version 243.23654.44 matches 243.23654.180
+    INFO Plugin YouTrack Integration version 2024.2.123 matches 243.23654.180
+    INFO Plugin PowerShell version 2.8.0 matches 243.23654.180
+    INFO Plugin Go Template version 243.21565.122 matches 243.23654.180
+    INFO Plugin Unit File Support (systemd) version 242.250115.172 matches 243.23654.180
     WARNING No matching plugin Grazie Lite version for product build 243.23654.180
-    INFO Found matching plugin Kubernetes Runtime Configuration version 1.4.1
-    INFO Found matching plugin Shell Script version 243.22562.53
-    INFO Found matching plugin YAML version 243.23654.189
-    INFO Found matching plugin Indent Rainbow version 2.2.0
-    INFO Found matching plugin Grazie Pro version 0.3.359
-    INFO Found matching plugin Unicorn Progress Bar version 1.1.4
-    INFO Generating metadata for product RR
-    INFO Found 88 files linked to the configuration
-    WARNING Found 2 unknown files or directories in artefacts
-    WARNING List of unknown items has been saved in `unknown.txt` for information
+    INFO Plugin Kubernetes Runtime Configuration version 1.4.1 matches 243.23654.180
+    INFO Plugin Shell Script version 243.22562.53 matches 243.23654.180
+    INFO Plugin YAML version 243.23654.189 matches 243.23654.180
+    INFO Plugin Indent Rainbow version 2.2.0 matches 243.23654.180
+    INFO Plugin Grazie Pro version 0.3.359 matches 243.23654.180
+    INFO Plugin Unicorn Progress Bar version 1.1.4 matches 243.23654.180
+    INFO Generating metadata : artefacts\index.json
+    INFO Writing tracked url to artefacts\url.json
+    INFO Found 31 files linked to the configuration
+    WARNING Found 1 unknown items in artefacts
+    WARNING List of unknown items has been saved in `unknown.txt`
     WARNING To remove the unknown items, restart with --clean-unknown
-    INFO Management of known/unknown files complete.
+    INFO Management of known/unknown files complete
     INFO JetBrains product and plugins downloader finished.
